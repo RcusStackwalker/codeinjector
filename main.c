@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <endian.h>
+#include <unistd.h>
 
 #include "supported_ecus.h"
 
