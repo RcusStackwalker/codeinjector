@@ -8,3 +8,4 @@ set(SRC_LIST
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 target_link_libraries(${PROJECT_NAME} bfd dl)
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
