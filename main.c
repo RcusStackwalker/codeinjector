@@ -177,10 +177,10 @@ static void emit_axis_ex_desc(const char *axis_sym_name, const char *axis_type)
 	
 
 
-	printf("\t<table name=\"%s\" type=\"%s Axis\" address=\"%x\" elements=\"%u\" scaling=\"%s\"/>\n",
+	printf("\t<table name=\"%s\" type=\"%s Axis\" address=\"%lx\" elements=\"%u\" scaling=\"%s\"/>\n",
 		username,
 		axis_type,
-		(unsigned)bfd_asymbol_value(data_sym) + AXIS_HEADER_SIZE,
+		(unsigned long)bfd_asymbol_value(data_sym) + AXIS_HEADER_SIZE,
 		get_axis_size((unsigned)bfd_asymbol_value(data_sym)),
 		scaling);
 
@@ -212,10 +212,10 @@ static void emit_axis_desc(const char *axis_sym_name, const char *axis_type)
 	
 
 
-	printf("\t<table name=\"%s\" type=\"%s Axis\" address=\"%x\" elements=\"%s\" scaling=\"%s\"/>\n",
+	printf("\t<table name=\"%s\" type=\"%s Axis\" address=\"%lx\" elements=\"%s\" scaling=\"%s\"/>\n",
 		username,
 		axis_type,
-		(unsigned)bfd_asymbol_value(data_sym) + AXIS_HEADER_SIZE,
+		(unsigned long)bfd_asymbol_value(data_sym) + AXIS_HEADER_SIZE,
 		size,
 		scaling);
 
