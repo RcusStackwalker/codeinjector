@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #ifdef __APPLE__
-#  include <sys/endian.h>
+#  include <machine/endian.h>
 #else
 #  include <endian.h>
 #endif
