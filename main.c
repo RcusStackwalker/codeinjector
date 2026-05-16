@@ -5,7 +5,14 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <endian.h>
+#ifdef __APPLE__
+#  include <libkern/OSByteOrder.h>
+#  define be16toh(x) OSSwapBigToHostInt16(x)
+#  define be32toh(x) OSSwapBigToHostInt32(x)
+#  define htobe32(x) OSSwapHostToBigInt32(x)
+#else
+#  include <endian.h>
+#endif
 #include <unistd.h>
 
 #include "supported_ecus.h"
@@ -173,10 +180,10 @@ static void emit_axis_ex_desc(const char *axis_sym_name, const char *axis_type)
 	
 
 
-	printf("\t<table name=\"%s\" type=\"%s Axis\" address=\"%x\" elements=\"%u\" scaling=\"%s\"/>\n",
+	printf("\t<table name=\"%s\" type=\"%s Axis\" address=\"%lx\" elements=\"%u\" scaling=\"%s\"/>\n",
 		username,
 		axis_type,
-		(unsigned)bfd_asymbol_value(data_sym) + AXIS_HEADER_SIZE,
+		(unsigned long)bfd_asymbol_value(data_sym) + AXIS_HEADER_SIZE,
 		get_axis_size((unsigned)bfd_asymbol_value(data_sym)),
 		scaling);
 
@@ -208,10 +215,10 @@ static void emit_axis_desc(const char *axis_sym_name, const char *axis_type)
 	
 
 
-	printf("\t<table name=\"%s\" type=\"%s Axis\" address=\"%x\" elements=\"%s\" scaling=\"%s\"/>\n",
+	printf("\t<table name=\"%s\" type=\"%s Axis\" address=\"%lx\" elements=\"%s\" scaling=\"%s\"/>\n",
 		username,
 		axis_type,
-		(unsigned)bfd_asymbol_value(data_sym) + AXIS_HEADER_SIZE,
+		(unsigned long)bfd_asymbol_value(data_sym) + AXIS_HEADER_SIZE,
 		size,
 		scaling);
 
@@ -365,7 +372,7 @@ enum data_desc_type get_data_desc_type(const char *_str)
 
 static char *get_data_desc_string(asymbol *sym)
 {
-	long sectsize = bfd_get_section_size(sym->section);
+	long sectsize = bfd_section_size(sym->section);
 	char *ret = malloc(sectsize);
 	bfd_get_section_contents(sym->section->owner, sym->section, ret, sym->value, sectsize - sym->value);
 	return ret;
@@ -399,7 +406,7 @@ static void data_desc_generator(bfd *abfd, asection *sect, void *obj)
 
 	for (i = 0; i < number_of_symbols; i++) {
 		asymbol *sym = symbol_table[i];
-		if (bfd_get_section(sym) != sect)
+		if (bfd_asymbol_section(sym) != sect)
 			continue;
 
 		if (sym->flags & BSF_SECTION_SYM)

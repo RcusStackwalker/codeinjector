@@ -1,0 +1,22 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: tomtom-international/commisery-action/bump@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          create-release: true
+          create-tag: true

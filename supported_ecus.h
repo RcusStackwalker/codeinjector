@@ -16,6 +16,6 @@ struct ecu_description
 	unsigned short_pointer_size;
 };
 
-struct ecu_description supported_ecus[3];
+extern struct ecu_description supported_ecus[3];
 
 #endif /*SUPPORTED_ECUS_H*/
