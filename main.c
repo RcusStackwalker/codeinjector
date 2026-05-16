@@ -6,7 +6,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #ifdef __APPLE__
-#  include <machine/endian.h>
+#  include <libkern/OSByteOrder.h>
+#  define be16toh(x) OSSwapBigToHostInt16(x)
+#  define be32toh(x) OSSwapBigToHostInt32(x)
+#  define htobe32(x) OSSwapHostToBigInt32(x)
 #else
 #  include <endian.h>
 #endif
