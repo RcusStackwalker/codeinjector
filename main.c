@@ -5,7 +5,11 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <endian.h>
+#ifdef __APPLE__
+#  include <sys/endian.h>
+#else
+#  include <endian.h>
+#endif
 #include <unistd.h>
 
 #include "supported_ecus.h"
@@ -365,7 +369,7 @@ enum data_desc_type get_data_desc_type(const char *_str)
 
 static char *get_data_desc_string(asymbol *sym)
 {
-	long sectsize = bfd_get_section_size(sym->section);
+	long sectsize = bfd_section_size(sym->section);
 	char *ret = malloc(sectsize);
 	bfd_get_section_contents(sym->section->owner, sym->section, ret, sym->value, sectsize - sym->value);
 	return ret;
@@ -399,7 +403,7 @@ static void data_desc_generator(bfd *abfd, asection *sect, void *obj)
 
 	for (i = 0; i < number_of_symbols; i++) {
 		asymbol *sym = symbol_table[i];
-		if (bfd_get_section(sym) != sect)
+		if (bfd_asymbol_section(sym) != sect)
 			continue;
 
 		if (sym->flags & BSF_SECTION_SYM)
