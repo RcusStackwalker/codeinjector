@@ -35,6 +35,33 @@ pub fn get_patch_method(name: &str) -> PatchMethod {
 
 use crate::ecu::EcuDescription;
 
+fn hex_print(data: &[u8]) {
+    for b in data {
+        print!("{:02x}", b);
+    }
+}
+
+fn print_patch_xml(
+    section_name: &str,
+    patch_address: usize,
+    patch_size: usize,
+    ori_buf: &[u8],
+    out_buf: &[u8],
+) {
+    let scaling_name = format!("{} _scaling", section_name).replace('.', "_");
+    println!("<scaling name=\"{}\" storagetype=\"bloblist\">", scaling_name);
+    print!("\t<data name=\"Original\" value=\"");
+    hex_print(&ori_buf[patch_address..patch_address + patch_size]);
+    println!("\" />");
+    print!("\t<data name=\"Patched\" value=\"");
+    hex_print(&out_buf[patch_address..patch_address + patch_size]);
+    println!("\" />\n</scaling>\n");
+    println!(
+        "<table name=\"{}\" address=\"{:x}\" category=\"Patches\" type=\"1D\" scaling=\"{}\" />\n",
+        section_name, patch_address, scaling_name
+    );
+}
+
 pub fn inject_section(
     name: &str,
     vma: usize,
@@ -43,8 +70,25 @@ pub fn inject_section(
     ori_buf: &[u8],
     out_buf: &mut Vec<u8>,
 ) {
-    // TODO: implement in Tasks 5-8
-    let _ = (name, vma, section_data, ecu, ori_buf, out_buf);
+    let method = get_patch_method(name);
+
+    if method != PatchMethod::Generic {
+        if !name.contains(ecu.patch_method_prefix) {
+            println!("patch_method incompatible with arch at {}", name);
+            crate::usage_and_exit();
+        }
+    }
+
+    let sec_size = section_data.len();
+    let (patch_address, patch_size): (usize, usize) = match method {
+        PatchMethod::Generic => {
+            out_buf[vma..vma + sec_size].copy_from_slice(section_data);
+            (vma, sec_size)
+        }
+        _ => return, // TODO: Tasks 6-8
+    };
+
+    print_patch_xml(name, patch_address, patch_size, ori_buf, out_buf);
 }
 
 #[cfg(test)]
