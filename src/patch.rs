@@ -106,12 +106,12 @@ fn encode_m32r_splice(data: &[u8], vma: usize) -> Result<[u8; 8], &'static str> 
     let target1 = u32::from_be_bytes(data[0..4].try_into().unwrap());
     let target2 = u32::from_be_bytes(data[4..8].try_into().unwrap());
     let pc1 = vma as u32;
-    let pc2 = vma as u32 + 4;
+    let pc2 = (vma as u32).wrapping_add(4);
     let p1 = 0xfe00_0000u32.wrapping_add(
-        target1.wrapping_sub(pc1).wrapping_div(4) & 0x00ff_ffff,
+        (target1.wrapping_sub(pc1) >> 2) & 0x00ff_ffff,
     );
     let p2 = 0xff00_0000u32.wrapping_add(
-        target2.wrapping_sub(pc2).wrapping_div(4) & 0x00ff_ffff,
+        (target2.wrapping_sub(pc2) >> 2) & 0x00ff_ffff,
     );
     let mut result = [0u8; 8];
     result[0..4].copy_from_slice(&p1.to_be_bytes());
@@ -244,10 +244,21 @@ mod tests {
 
     #[test]
     fn test_encode_m32r_splice() {
+        // target1=0x2000 pc1=0x1000 → (0x1000/4)=0x400 → 0xfe000400
+        // target2=0x3000 pc2=0x1004 → (0x1FFC/4)=0x7ff → 0xff0007ff
         let data = [0x00u8, 0x00, 0x20, 0x00, 0x00, 0x00, 0x30, 0x00];
         let result = encode_m32r_splice(&data, 0x1000).unwrap();
         assert_eq!(&result[0..4], &[0xfe, 0x00, 0x04, 0x00]);
         assert_eq!(&result[4..8], &[0xff, 0x00, 0x07, 0xff]);
         assert!(encode_m32r_splice(&[0u8; 4], 0x1000).is_err());
+    }
+
+    #[test]
+    fn test_inject_relocate_section() {
+        let ori = vec![0u8; 0x2000];
+        let mut out = ori.clone();
+        let ecu = crate::ecu::find_ecu("mmc-m32r").unwrap();
+        inject_section("[m32r-relocate-section].data", 0, &[0x00, 0x00, 0x10, 0x00, 0xAA, 0xBB], ecu, &ori, &mut out);
+        assert_eq!(&out[0x1000..0x1006], &[0x00, 0x00, 0x10, 0x00, 0xAA, 0xBB]);
     }
 }
