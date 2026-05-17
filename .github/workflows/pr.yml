@@ -35,3 +35,31 @@ jobs:
           name: codeinjector-${{ matrix.os }}
           path: build/codeinjector
           retention-days: 1
+
+  test-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binutils-dev python3-pip
+          pip install pytest gcovr
+
+      - name: Build with coverage
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Coverage
+          cmake --build build --parallel
+
+      - name: Run tests
+        run: pytest tests/ --binary=build/codeinjector -v
+
+      - name: Report coverage
+        run: |
+          gcovr \
+            --root . \
+            --exclude 'build/.*' \
+            --exclude 'tests/.*' \
+            --markdown \
+            >> $GITHUB_STEP_SUMMARY
