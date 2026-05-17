@@ -92,7 +92,7 @@ fn main() {
     } else {
         use std::io::Write;
         std::io::stdout().write_all(&out_buf).unwrap_or_else(|e| {
-            println!("Unable to write contents to output\n: {e}");
+            println!("Unable to write contents to output: {e}");
         });
     }
 }
