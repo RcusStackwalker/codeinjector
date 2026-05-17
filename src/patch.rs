@@ -62,6 +62,43 @@ fn print_patch_xml(
     );
 }
 
+fn encode_m32r_bl(data: &[u8], vma: usize) -> Result<[u8; 4], &'static str> {
+    if data.len() != 4 {
+        return Err("Invalid bl injection instruction section size");
+    }
+    let target = u32::from_be_bytes(data[0..4].try_into().unwrap());
+    let pc = vma as u32;
+    let patch = 0xfe000000u32.wrapping_add(
+        target.wrapping_sub(pc).wrapping_div(4) & 0x00ff_ffff,
+    );
+    Ok(patch.to_be_bytes())
+}
+
+fn encode_m32r_ld24(data: &[u8], r4: bool) -> Result<[u8; 4], &'static str> {
+    if data.len() != 4 {
+        return Err("Invalid ld24 injection instruction section size");
+    }
+    let target = u32::from_be_bytes(data[0..4].try_into().unwrap());
+    let mut patch = 0xe000_0000u32.wrapping_add(target);
+    if r4 {
+        patch = patch.wrapping_add(4u32 << 24);
+    }
+    Ok(patch.to_be_bytes())
+}
+
+fn encode_m32r_lduh_r1(data: &[u8]) -> Result<[u8; 4], &'static str> {
+    if data.len() != 4 {
+        return Err("Invalid lduh injection instruction section size");
+    }
+    let target = u32::from_be_bytes(data[0..4].try_into().unwrap());
+    let disp16 = target.wrapping_sub(0x8000_8000) as u16;
+    let dst_register: u32 = 1;
+    let patch = 0xa0bd_0000u32
+        .wrapping_add(dst_register << 24)
+        .wrapping_add(disp16 as u32);
+    Ok(patch.to_be_bytes())
+}
+
 pub fn inject_section(
     name: &str,
     vma: usize,
@@ -85,7 +122,39 @@ pub fn inject_section(
             out_buf[vma..vma + sec_size].copy_from_slice(section_data);
             (vma, sec_size)
         }
-        _ => return, // TODO: Tasks 6-8
+        PatchMethod::M32rBl => {
+            let patch = encode_m32r_bl(section_data, vma).unwrap_or_else(|e| {
+                println!("{}", e);
+                crate::usage_and_exit();
+            });
+            out_buf[vma..vma + 4].copy_from_slice(&patch);
+            (vma, 4)
+        }
+        PatchMethod::M32rLd24R0 => {
+            let patch = encode_m32r_ld24(section_data, false).unwrap_or_else(|e| {
+                println!("{}", e);
+                crate::usage_and_exit();
+            });
+            out_buf[vma..vma + 4].copy_from_slice(&patch);
+            (vma, 4)
+        }
+        PatchMethod::M32rLd24R4 => {
+            let patch = encode_m32r_ld24(section_data, true).unwrap_or_else(|e| {
+                println!("{}", e);
+                crate::usage_and_exit();
+            });
+            out_buf[vma..vma + 4].copy_from_slice(&patch);
+            (vma, 4)
+        }
+        PatchMethod::M32rLduhR1 => {
+            let patch = encode_m32r_lduh_r1(section_data).unwrap_or_else(|e| {
+                println!("{}", e);
+                crate::usage_and_exit();
+            });
+            out_buf[vma..vma + 4].copy_from_slice(&patch);
+            (vma, 4)
+        }
+        _ => return, // TODO: Tasks 7-8
     };
 
     print_patch_xml(name, patch_address, patch_size, ori_buf, out_buf);
@@ -108,5 +177,32 @@ mod tests {
         assert_eq!(get_patch_method("[sh-relocate-section].text"),        PatchMethod::ShRelocateSection);
         assert_eq!(get_patch_method("generic_section"),                   PatchMethod::Generic);
         assert_eq!(get_patch_method("data_desc"),                        PatchMethod::Generic);
+    }
+
+    #[test]
+    fn test_encode_m32r_bl() {
+        // target=0x2000, vma=0x1000 → offset=(0x1000/4)=0x400 → 0xfe000400
+        let result = encode_m32r_bl(&[0x00, 0x00, 0x20, 0x00], 0x1000);
+        assert_eq!(result.unwrap(), [0xfe, 0x00, 0x04, 0x00]);
+        // Wrong size
+        assert!(encode_m32r_bl(&[0x00; 8], 0x1000).is_err());
+    }
+
+    #[test]
+    fn test_encode_m32r_ld24() {
+        // target=0x1234 → r0: 0xe0001234, r4: 0xe4001234
+        assert_eq!(encode_m32r_ld24(&[0x00, 0x00, 0x12, 0x34], false).unwrap(), [0xe0, 0x00, 0x12, 0x34]);
+        assert_eq!(encode_m32r_ld24(&[0x00, 0x00, 0x12, 0x34], true).unwrap(),  [0xe4, 0x00, 0x12, 0x34]);
+        assert!(encode_m32r_ld24(&[0x00; 8], false).is_err());
+    }
+
+    #[test]
+    fn test_encode_m32r_lduh_r1() {
+        // target=0x80009000 → disp16=0x1000 → 0xa1bd1000
+        assert_eq!(
+            encode_m32r_lduh_r1(&[0x80, 0x00, 0x90, 0x00]).unwrap(),
+            [0xa1, 0xbd, 0x10, 0x00]
+        );
+        assert!(encode_m32r_lduh_r1(&[0x00; 8]).is_err());
     }
 }
