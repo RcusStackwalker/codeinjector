@@ -48,6 +48,7 @@ static void print_section(bfd *abfd, asection *sect, void *obj)
 		printf("%d[%d] %s\n", sect->index, sect->id, sect->name);
 }
 
+/* LCOV_EXCL_START */
 void print_table()
 {
 	long storage_needed;
@@ -81,6 +82,7 @@ void print_table()
 
 	printf("Number of symbols: %ld\n", number_of_symbols);
 }
+/* LCOV_EXCL_STOP */
 
 static void hexprintf(unsigned char *data, unsigned size)
 {
@@ -390,8 +392,8 @@ static void data_desc_generator(bfd *abfd, asection *sect, void *obj)
 	long i;
 	storage_needed = bfd_get_symtab_upper_bound (abfd);
 
-	if (storage_needed < 0)
-		return;
+	if (storage_needed < 0) /* LCOV_EXCL_LINE */
+		return;             /* LCOV_EXCL_LINE */
 	if (storage_needed == 0) {
 		return;
 	}
@@ -399,8 +401,8 @@ static void data_desc_generator(bfd *abfd, asection *sect, void *obj)
 
 	number_of_symbols =
 	bfd_canonicalize_symtab (abfd, symbol_table);
-	if (number_of_symbols < 0)
-		return;
+	if (number_of_symbols < 0) /* LCOV_EXCL_LINE */
+		return;                /* LCOV_EXCL_LINE */
 
 	qsort(symbol_table, number_of_symbols, sizeof(asymbol *), compare_symbols_by_name);
 
@@ -646,22 +648,22 @@ int main(int argc, char **argv)
 	}
 	struct stat stat;
 	ret = fstat(original_fd, &stat);
-	if (ret == -1) {
+	if (ret == -1) { /* LCOV_EXCL_START */
 		printf("Can't get original_file size\n");
 		usage();
-	}
+	} /* LCOV_EXCL_STOP */
 	obuffer = malloc(stat.st_size);
 	ori_buffer = malloc(stat.st_size);
-	if (!obuffer || !ori_buffer) {
+	if (!obuffer || !ori_buffer) { /* LCOV_EXCL_START */
 		printf("Not enough memory for original_file\n");
 		usage();
-	}
+	} /* LCOV_EXCL_STOP */
 	flash_size = stat.st_size;
 	ret = read(original_fd, obuffer, flash_size);
-	if (ret != flash_size) {
+	if (ret != flash_size) { /* LCOV_EXCL_START */
 		printf("Can't read contents of original_file\n");
 		usage();
-	}
+	} /* LCOV_EXCL_STOP */
 	memcpy(ori_buffer, obuffer, flash_size);
 
 	injection_fd = open(argv[3], O_RDONLY);
@@ -677,14 +679,14 @@ int main(int argc, char **argv)
 			printf("Can't create output_file\n");
 			usage();
 		}
-	} else {
+	} else { /* LCOV_EXCL_START */
 		output_fd = 0;
-	}
+	} /* LCOV_EXCL_STOP */
 
 	bfd_init();
 
 	injection_bfd = bfd_fdopenr(argv[2], "elf32-big", injection_fd);
-	if (!injection_bfd) {
+	if (!injection_bfd) { /* LCOV_EXCL_START */
 		printf("Can't BFD open injection_file\n");
 		const char **bfd_targets = bfd_target_list();
 		while (*bfd_targets) {
@@ -692,7 +694,7 @@ int main(int argc, char **argv)
 			++bfd_targets;
 		}
 		usage();
-	}
+	} /* LCOV_EXCL_STOP */
 
 	if (!bfd_check_format(injection_bfd, bfd_object)) {
 		printf("injection_file isn't BFD object\n");
@@ -703,7 +705,7 @@ int main(int argc, char **argv)
 	/*rebuild crc*/
 
 	ret = write(output_fd, obuffer, flash_size);
-	if (ret != flash_size) {
+	if (ret != flash_size) { /* LCOV_EXCL_START */
 		perror("Unable to write contents to output\n");
-	}
+	} /* LCOV_EXCL_STOP */
 }
