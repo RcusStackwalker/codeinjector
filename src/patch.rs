@@ -145,7 +145,7 @@ fn encode_sh_splice(data: &[u8], vma: usize) -> Result<([u8; 26], usize), &'stat
     let nop_prefix = match vma % 4 {
         2 => true,
         0 => false,
-        _ => return Err("Invalid vma in [sh-jump-to-body]"),
+        _ => return Err("Invalid vma in [sh-splice-into-function]"),
     };
     let static_body: [u8; 16] = [
         0xda, 0x03, 0x4a, 0x0b, 0x00, 0x09, 0x00, 0x09,
@@ -335,6 +335,8 @@ mod tests {
         let (body2, size2) = encode_sh_jump_to_body(&target, 0x1002).unwrap();
         assert_eq!(size2, 14);
         assert_eq!(&body2[0..2], &[0x00, 0x09]);
+        assert_eq!(&body2[2..10], &[0xd0, 0x01, 0x40, 0x2b, 0x00, 0x09, 0x00, 0x09]);
+        assert_eq!(&body2[10..14], &[0x00, 0x00, 0x80, 0x00]);
 
         // vma % 4 == 1: error
         assert!(encode_sh_jump_to_body(&target, 0x1001).is_err());
@@ -352,5 +354,18 @@ mod tests {
             0x00, 0x00, 0x50, 0x00, 0x00, 0x00, 0x60, 0x00,
         ];
         assert_eq!(&body[0..24], &expected);
+
+        // NOP-prefix case (vma=0x1002)
+        let (body_nop, size_nop) = encode_sh_splice(&data, 0x1002).unwrap();
+        assert_eq!(size_nop, 26);
+        assert_eq!(&body_nop[0..2], &[0x00, 0x09]);
+        assert_eq!(&body_nop[2..18], &[
+            0xda, 0x03, 0x4a, 0x0b, 0x00, 0x09, 0x00, 0x09,
+            0xd0, 0x02, 0x40, 0x2b, 0x00, 0x09, 0x00, 0x09,
+        ]);
+        assert_eq!(&body_nop[18..26], &[0x00, 0x00, 0x50, 0x00, 0x00, 0x00, 0x60, 0x00]);
+
+        // Error case
+        assert!(encode_sh_splice(&data, 0x1001).is_err());
     }
 }
