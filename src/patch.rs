@@ -119,6 +119,51 @@ fn encode_m32r_splice(data: &[u8], vma: usize) -> Result<[u8; 8], &'static str> 
     Ok(result)
 }
 
+// Returns (buf, total_patch_size). buf is 14 bytes max; only buf[..size] is valid.
+fn encode_sh_jump_to_body(data: &[u8], vma: usize) -> Result<([u8; 14], usize), &'static str> {
+    let nop_prefix = match vma % 4 {
+        2 => true,
+        0 => false,
+        _ => return Err("Invalid vma in [sh-jump-to-body]"),
+    };
+    let static_body: [u8; 8] = [0xd0, 0x01, 0x40, 0x2b, 0x00, 0x09, 0x00, 0x09];
+    let mut buf = [0u8; 14];
+    if nop_prefix {
+        buf[0..2].copy_from_slice(&[0x00, 0x09]);
+        buf[2..10].copy_from_slice(&static_body);
+        buf[10..14].copy_from_slice(&data[0..4]);
+        Ok((buf, 14))
+    } else {
+        buf[0..8].copy_from_slice(&static_body);
+        buf[8..12].copy_from_slice(&data[0..4]);
+        Ok((buf, 12))
+    }
+}
+
+// Returns (buf, total_patch_size). buf is 26 bytes max; only buf[..size] is valid.
+fn encode_sh_splice(data: &[u8], vma: usize) -> Result<([u8; 26], usize), &'static str> {
+    let nop_prefix = match vma % 4 {
+        2 => true,
+        0 => false,
+        _ => return Err("Invalid vma in [sh-jump-to-body]"),
+    };
+    let static_body: [u8; 16] = [
+        0xda, 0x03, 0x4a, 0x0b, 0x00, 0x09, 0x00, 0x09,
+        0xd0, 0x02, 0x40, 0x2b, 0x00, 0x09, 0x00, 0x09,
+    ];
+    let mut buf = [0u8; 26];
+    if nop_prefix {
+        buf[0..2].copy_from_slice(&[0x00, 0x09]);
+        buf[2..18].copy_from_slice(&static_body);
+        buf[18..26].copy_from_slice(&data[0..8]);
+        Ok((buf, 26))
+    } else {
+        buf[0..16].copy_from_slice(&static_body);
+        buf[16..24].copy_from_slice(&data[0..8]);
+        Ok((buf, 24))
+    }
+}
+
 pub fn inject_section(
     name: &str,
     vma: usize,
@@ -190,7 +235,22 @@ pub fn inject_section(
             out_buf[target..target + section_data.len()].copy_from_slice(section_data);
             (target, section_data.len())
         }
-        _ => return, // TODO: Task 8 (SH patches)
+        PatchMethod::ShJumpToBody => {
+            let (buf, size) = encode_sh_jump_to_body(section_data, vma).unwrap_or_else(|e| {
+                println!("{}", e);
+                crate::usage_and_exit();
+            });
+            out_buf[vma..vma + size].copy_from_slice(&buf[0..size]);
+            (vma, size)
+        }
+        PatchMethod::ShSpliceIntoFunction => {
+            let (buf, size) = encode_sh_splice(section_data, vma).unwrap_or_else(|e| {
+                println!("{}", e);
+                crate::usage_and_exit();
+            });
+            out_buf[vma..vma + size].copy_from_slice(&buf[0..size]);
+            (vma, size)
+        }
     };
 
     print_patch_xml(name, patch_address, patch_size, ori_buf, out_buf);
@@ -260,5 +320,37 @@ mod tests {
         let ecu = crate::ecu::find_ecu("mmc-m32r").unwrap();
         inject_section("[m32r-relocate-section].data", 0, &[0x00, 0x00, 0x10, 0x00, 0xAA, 0xBB], ecu, &ori, &mut out);
         assert_eq!(&out[0x1000..0x1006], &[0x00, 0x00, 0x10, 0x00, 0xAA, 0xBB]);
+    }
+
+    #[test]
+    fn test_sh_jump_to_body() {
+        // vma=0x1000 (0x1000 % 4 == 0): no NOP prefix, patch_size=12
+        let target = [0x00u8, 0x00, 0x80, 0x00];
+        let (body, size) = encode_sh_jump_to_body(&target, 0x1000).unwrap();
+        assert_eq!(size, 12);
+        assert_eq!(&body[0..8], &[0xd0, 0x01, 0x40, 0x2b, 0x00, 0x09, 0x00, 0x09]);
+        assert_eq!(&body[8..12], &[0x00, 0x00, 0x80, 0x00]);
+
+        // vma=0x1002 (0x1002 % 4 == 2): NOP prefix prepended, patch_size=14
+        let (body2, size2) = encode_sh_jump_to_body(&target, 0x1002).unwrap();
+        assert_eq!(size2, 14);
+        assert_eq!(&body2[0..2], &[0x00, 0x09]);
+
+        // vma % 4 == 1: error
+        assert!(encode_sh_jump_to_body(&target, 0x1001).is_err());
+    }
+
+    #[test]
+    fn test_sh_splice() {
+        // vma=0x1000 (aligned): no NOP prefix, patch_size=24
+        let data = [0x00u8, 0x00, 0x50, 0x00, 0x00, 0x00, 0x60, 0x00];
+        let (body, size) = encode_sh_splice(&data, 0x1000).unwrap();
+        assert_eq!(size, 24);
+        let expected: [u8; 24] = [
+            0xda, 0x03, 0x4a, 0x0b, 0x00, 0x09, 0x00, 0x09,
+            0xd0, 0x02, 0x40, 0x2b, 0x00, 0x09, 0x00, 0x09,
+            0x00, 0x00, 0x50, 0x00, 0x00, 0x00, 0x60, 0x00,
+        ];
+        assert_eq!(&body[0..24], &expected);
     }
 }
