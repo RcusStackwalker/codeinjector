@@ -14,7 +14,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
@@ -26,15 +26,15 @@ jobs:
 
       - name: Install wheel and run tests
         run: |
-          pip install --force-reinstall dist/*.whl
+          pip install --force-reinstall target/wheels/*.whl
           pytest tests/ --binary "$(which codeinjector)" -v
 
       - name: Upload wheel
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheel-${{ matrix.os }}
           path: dist/*.whl
-          retention-days: 7
+          retention-days: 2
 
   test-coverage:
     runs-on: ubuntu-latest
@@ -45,7 +45,7 @@ jobs:
 
       - uses: taiki-e/install-action@cargo-llvm-cov
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
