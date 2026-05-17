@@ -44,8 +44,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y binutils-dev python3-pip gcovr
-          pip install pytest
+          sudo apt-get install -y binutils-dev python3-pip
+          pip install pytest gcovr
 
       - name: Build with coverage
         run: |
