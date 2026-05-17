@@ -60,7 +60,7 @@ fn get_axis_size(rom_addr: usize, ori_buf: &[u8], short_pointer_size: usize) -> 
     if offset + 2 > ori_buf.len() {
         return 0;
     }
-    u16::from_be_bytes(ori_buf[offset..offset + 2].try_into().unwrap_or([0, 0]))
+    u16::from_be_bytes([ori_buf[offset], ori_buf[offset + 1]])
 }
 
 fn emit_value_data_desc(s: &str, data_addr: u64) {
@@ -178,7 +178,7 @@ fn emit_2dmap_data_desc(
     let cat      = p.next().unwrap_or("");
     let name     = p.next().unwrap_or("");
     let scl      = p.next().unwrap_or("");
-    let axisname = p.next().unwrap_or("").to_string();
+    let axisname = p.next().unwrap_or("");
     println!("<table name=\"{}\" category=\"{}\" address=\"{:x}\" type=\"2D\" scaling=\"{}\">",
         name, cat, data_addr as u32, scl);
     emit_axis_desc(&axisname, "Y", symbols, section_data, ori_buf, short_pointer_size);
@@ -198,8 +198,8 @@ fn emit_3dmap_data_desc(
     let cat       = p.next().unwrap_or("");
     let name      = p.next().unwrap_or("");
     let scl       = p.next().unwrap_or("");
-    let xaxisname = p.next().unwrap_or("").to_string();
-    let yaxisname = p.next().unwrap_or("").to_string();
+    let xaxisname = p.next().unwrap_or("");
+    let yaxisname = p.next().unwrap_or("");
     println!("<table name=\"{}\" category=\"{}\" address=\"{:x}\" type=\"3D\" scaling=\"{}\" swapxy=\"true\">",
         name, cat, data_addr as u32, scl);
     emit_axis_desc(&xaxisname, "X", symbols, section_data, ori_buf, short_pointer_size);
