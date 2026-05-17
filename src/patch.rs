@@ -33,6 +33,20 @@ pub fn get_patch_method(name: &str) -> PatchMethod {
     PatchMethod::Generic
 }
 
+use crate::ecu::EcuDescription;
+
+pub fn inject_section(
+    name: &str,
+    vma: usize,
+    section_data: &[u8],
+    ecu: &EcuDescription,
+    ori_buf: &[u8],
+    out_buf: &mut Vec<u8>,
+) {
+    // TODO: implement in Tasks 5-8
+    let _ = (name, vma, section_data, ecu, ori_buf, out_buf);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
