@@ -33,7 +33,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: wheel-${{ matrix.os }}
-          path: dist/*.whl
+          path: target/wheels/*.whl
           retention-days: 2
 
   test-coverage:
