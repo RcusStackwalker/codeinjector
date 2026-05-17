@@ -1,0 +1,11 @@
+[package]
+name = "codeinjector"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "codeinjector"
+path = "src/main.rs"
+
+[dependencies]
+object = "0.39"
