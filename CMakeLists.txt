@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.12)
 project(codeinjector)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+    add_compile_options(--coverage -O0 -g)
+    add_link_options(--coverage)
+endif()
+
 set(SRC_LIST
 	main.c
 	supported_ecus.c
