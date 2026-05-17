@@ -9,57 +9,68 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y binutils-dev
+      - uses: dtolnay/rust-toolchain@stable
 
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: brew install binutils
-
-      - name: Configure
-        run: cmake -B build -S .
-
-      - name: Build
-        run: cmake --build build --parallel
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
+      - uses: actions/setup-python@v5
         with:
-          name: codeinjector-${{ matrix.os }}
-          path: build/codeinjector
-          retention-days: 1
+          python-version: "3.x"
+
+      - name: Install maturin and pytest
+        run: pip install "maturin>=1,<2" pytest
+
+      - name: Build wheel
+        run: maturin build --release
+
+      - name: Install wheel and run tests
+        run: |
+          pip install --force-reinstall dist/*.whl
+          pytest tests/ --binary "$(which codeinjector)" -v
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}
+          path: dist/*.whl
+          retention-days: 7
 
   test-coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: taiki-e/install-action@cargo-llvm-cov
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Build instrumented binary and run tests
         run: |
-          sudo apt-get update
-          sudo apt-get install -y binutils-dev python3-pip
-          pip install pytest gcovr
+          source <(cargo llvm-cov show-env --export-prefix)
+          cargo build
+          pytest tests/ --binary ./target/debug/codeinjector -v
 
-      - name: Build with coverage
+      - name: Generate coverage report
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Coverage
-          cmake --build build --parallel
+          cargo llvm-cov report --lcov --output-path lcov.info
+          {
+            echo '## Coverage'
+            echo '```'
+            cargo llvm-cov report --summary-only
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
 
-      - name: Run tests
-        run: pytest tests/ --binary=build/codeinjector -v
-
-      - name: Report coverage
-        run: |
-          gcovr \
-            --root . \
-            --exclude 'build/.*' \
-            --exclude 'tests/.*' \
-            --markdown \
-            >> $GITHUB_STEP_SUMMARY
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: lcov.info
+          retention-days: 7
