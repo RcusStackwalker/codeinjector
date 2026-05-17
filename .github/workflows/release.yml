@@ -43,7 +43,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
@@ -54,7 +54,7 @@ jobs:
         run: maturin build --release
 
       - name: Upload wheel to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.release.outputs.tag }}
           files: dist/*.whl
