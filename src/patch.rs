@@ -39,7 +39,12 @@ pub fn get_patch_method(name: &str) -> PatchMethod {
 use crate::ecu::EcuDescription;
 
 fn to_hex_string(data: &[u8]) -> String {
-    data.iter().map(|b| format!("{b:02x}")).collect()
+    use std::fmt::Write;
+    let mut s = String::with_capacity(data.len() * 2);
+    for b in data {
+        write!(s, "{b:02x}").unwrap();
+    }
+    s
 }
 
 fn print_patch_xml(
