@@ -9,10 +9,10 @@ use std::fs;
 use object::{Object, ObjectSection, ObjectSymbol, SectionFlags, SymbolKind};
 
 pub(crate) fn usage_and_exit() -> ! {
-    println!("Usage: codeinjector ecu_name original_file injection_file [output_file]");
-    println!("\tecu_name - one of supported ecu names: mmc-sh2, mmc-m32r");
-    println!("\toriginal_file - binary file of stock ROM");
-    println!("\tinjection_file - ELF container with override code");
+    eprintln!("Usage: codeinjector ecu_name original_file injection_file [output_file]");
+    eprintln!("\tecu_name - one of supported ecu names: mmc-sh2, mmc-m32r");
+    eprintln!("\toriginal_file - binary file of stock ROM");
+    eprintln!("\tinjection_file - ELF container with override code");
     std::process::exit(1);
 }
 
@@ -23,23 +23,23 @@ fn main() {
     }
 
     let ecu = ecu::find_ecu(&args[1]).unwrap_or_else(|| {
-        println!("{} ecu not supported", args[1]);
+        eprintln!("{} ecu not supported", args[1]);
         usage_and_exit();
     });
 
     let ori_buf = fs::read(&args[2]).unwrap_or_else(|_| {
-        println!("No original_file");
+        eprintln!("No original_file");
         usage_and_exit();
     });
     let mut out_buf = ori_buf.clone();
 
     let injection_data = fs::read(&args[3]).unwrap_or_else(|_| {
-        println!("No injection_file");
+        eprintln!("No injection_file");
         usage_and_exit();
     });
 
     let injection_file = object::File::parse(injection_data.as_slice()).unwrap_or_else(|_| {
-        println!("injection_file isn't BFD object");
+        eprintln!("injection_file isn't BFD object");
         usage_and_exit();
     });
 
@@ -89,13 +89,13 @@ fn main() {
 
     if args.len() > 4 {
         fs::write(&args[4], &out_buf).unwrap_or_else(|_| {
-            println!("Can't create output_file");
+            eprintln!("Can't create output_file");
             usage_and_exit();
         });
     } else {
         use std::io::Write;
         std::io::stdout().write_all(&out_buf).unwrap_or_else(|e| {
-            println!("Unable to write contents to output: {e}");
+            eprintln!("Unable to write contents to output: {e}");
         });
     }
 }

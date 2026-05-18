@@ -175,7 +175,7 @@ pub fn inject_section(
 
     if method != PatchMethod::Generic {
         if !name.contains(ecu.patch_method_prefix) {
-            println!("patch_method incompatible with arch at {}", name);
+            eprintln!("patch_method incompatible with arch at {}", name);
             crate::usage_and_exit();
         }
     }
@@ -188,7 +188,7 @@ pub fn inject_section(
         }
         PatchMethod::M32rBl => {
             let patch = encode_m32r_bl(section_data, vma).unwrap_or_else(|e| {
-                println!("{}", e);
+                eprintln!("{}", e);
                 crate::usage_and_exit();
             });
             out_buf[vma..vma + 4].copy_from_slice(&patch);
@@ -196,7 +196,7 @@ pub fn inject_section(
         }
         PatchMethod::M32rLd24R0 => {
             let patch = encode_m32r_ld24(section_data, false).unwrap_or_else(|e| {
-                println!("{}", e);
+                eprintln!("{}", e);
                 crate::usage_and_exit();
             });
             out_buf[vma..vma + 4].copy_from_slice(&patch);
@@ -204,7 +204,7 @@ pub fn inject_section(
         }
         PatchMethod::M32rLd24R4 => {
             let patch = encode_m32r_ld24(section_data, true).unwrap_or_else(|e| {
-                println!("{}", e);
+                eprintln!("{}", e);
                 crate::usage_and_exit();
             });
             out_buf[vma..vma + 4].copy_from_slice(&patch);
@@ -212,7 +212,7 @@ pub fn inject_section(
         }
         PatchMethod::M32rLduhR1 => {
             let patch = encode_m32r_lduh_r1(section_data).unwrap_or_else(|e| {
-                println!("{}", e);
+                eprintln!("{}", e);
                 crate::usage_and_exit();
             });
             out_buf[vma..vma + 4].copy_from_slice(&patch);
@@ -220,7 +220,7 @@ pub fn inject_section(
         }
         PatchMethod::M32rSpliceIntoFunction => {
             let patch = encode_m32r_splice(section_data, vma).unwrap_or_else(|e| {
-                println!("{}", e);
+                eprintln!("{}", e);
                 crate::usage_and_exit();
             });
             out_buf[vma..vma + 8].copy_from_slice(&patch);
@@ -236,7 +236,7 @@ pub fn inject_section(
         }
         PatchMethod::ShJumpToBody => {
             let (buf, size) = encode_sh_jump_to_body(section_data, vma).unwrap_or_else(|e| {
-                println!("{}", e);
+                eprintln!("{}", e);
                 crate::usage_and_exit();
             });
             out_buf[vma..vma + size].copy_from_slice(&buf[0..size]);
@@ -244,7 +244,7 @@ pub fn inject_section(
         }
         PatchMethod::ShSpliceIntoFunction => {
             let (buf, size) = encode_sh_splice(section_data, vma).unwrap_or_else(|e| {
-                println!("{}", e);
+                eprintln!("{}", e);
                 crate::usage_and_exit();
             });
             out_buf[vma..vma + size].copy_from_slice(&buf[0..size]);
