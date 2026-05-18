@@ -6,6 +6,7 @@ mod ecu;
 mod patch;
 
 use std::fs;
+use std::io::Write;
 use object::{Object, ObjectSection, ObjectSymbol, SectionFlags, SymbolKind};
 
 pub(crate) fn usage_and_exit() -> ! {
@@ -93,7 +94,6 @@ fn main() {
             usage_and_exit();
         });
     } else {
-        use std::io::Write;
         std::io::stdout().write_all(&out_buf).unwrap_or_else(|e| {
             eprintln!("Unable to write contents to output: {e}");
         });
