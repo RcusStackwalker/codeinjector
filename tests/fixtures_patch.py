@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Aleksei Markelov
+
 """Generator functions for patch-method ELF fixtures."""
 import struct
 from elf_builder import ELFBuilder, EM_M32R, EM_SH, SHF_ALLOC

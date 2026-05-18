@@ -4,62 +4,80 @@ on:
   pull_request:
 
 jobs:
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+
+      - name: Run clippy with all warnings denied
+        run: cargo clippy -- -D warnings
+
   build:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y binutils-dev
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
 
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: brew install binutils
-
-      - name: Configure
-        run: cmake -B build -S .
-
-      - name: Build
-        run: cmake --build build --parallel
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          name: codeinjector-${{ matrix.os }}
-          path: build/codeinjector
-          retention-days: 1
+          python-version: "3.x"
+
+      - name: Install maturin and pytest
+        run: pip install -r .github/workflows/requirements.txt pytest
+
+      - name: Build wheel
+        run: maturin build --release
+
+      - name: Install wheel and run tests
+        run: |
+          pip install --force-reinstall target/wheels/*.whl
+          pytest tests/ --binary "$(which codeinjector)" -v
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: wheel-${{ matrix.os }}
+          path: target/wheels/*.whl
+          retention-days: 2
 
   test-coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Install dependencies
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+
+      - uses: taiki-e/install-action@1af28e82b8acfe451db73552a27a2019a19b9ab6 # cargo-llvm-cov
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.x"
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Build instrumented binary, run tests, and generate coverage
         run: |
-          sudo apt-get update
-          sudo apt-get install -y binutils-dev python3-pip
-          pip install pytest gcovr
+          source <(cargo llvm-cov show-env --sh)
+          cargo build
+          pytest tests/ --binary ./target/debug/codeinjector -v
+          cargo llvm-cov report --lcov --output-path lcov.info
+          {
+            echo '## Coverage'
+            echo '```'
+            cargo llvm-cov report --summary-only
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
 
-      - name: Build with coverage
-        run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Coverage
-          cmake --build build --parallel
-
-      - name: Run tests
-        run: pytest tests/ --binary=build/codeinjector -v
-
-      - name: Report coverage
-        run: |
-          gcovr \
-            --root . \
-            --exclude 'build/.*' \
-            --exclude 'tests/.*' \
-            --markdown \
-            >> $GITHUB_STEP_SUMMARY
+      - name: Upload coverage report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: coverage-lcov
+          path: lcov.info
+          retention-days: 7

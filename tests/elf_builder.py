@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Aleksei Markelov
+
 """Minimal big-endian 32-bit ELF object file builder."""
 import struct
 

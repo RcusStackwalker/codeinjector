@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Aleksei Markelov
+
 import struct
 import subprocess
 import pytest
@@ -123,7 +126,7 @@ def test_invalid_bl_size(binary, rom, out, tmp_path):
     r = subprocess.run([binary, 'mmc-m32r', str(rom), str(inj), str(out)],
                        capture_output=True, text=True)
     assert r.returncode != 0
-    assert 'Invalid bl injection instruction section size' in r.stdout
+    assert 'Invalid bl injection instruction section size' in r.stderr
 
 
 def test_incompatible_method(binary, rom, out, tmp_path):
@@ -133,7 +136,7 @@ def test_incompatible_method(binary, rom, out, tmp_path):
     r = subprocess.run([binary, 'mmc-m32r', str(rom), str(inj), str(out)],
                        capture_output=True, text=True)
     assert r.returncode != 0
-    assert 'patch_method incompatible' in r.stdout
+    assert 'patch_method incompatible' in r.stderr
 
 
 def test_bad_sh_vma(binary, rom, out, tmp_path):
@@ -143,4 +146,4 @@ def test_bad_sh_vma(binary, rom, out, tmp_path):
     r = subprocess.run([binary, 'mmc-sh2', str(rom), str(inj), str(out)],
                        capture_output=True, text=True)
     assert r.returncode != 0
-    assert 'Invalid vma' in r.stdout
+    assert 'Invalid vma' in r.stderr
