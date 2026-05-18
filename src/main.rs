@@ -53,7 +53,7 @@ fn main() {
             is_section_sym: s.kind() == SymbolKind::Section,
         })
         .collect();
-    symbols.sort_by(|a, b| a.name.cmp(&b.name));
+    symbols.sort_unstable_by_key(|s| s.name.clone());
 
     // Process sections (mirrors bfd_map_over_sections)
     for section in injection_file.sections() {
