@@ -70,7 +70,7 @@ fn main() {
 
         // Skip sections without SHF_ALLOC (mirrors SEC_LOAD check)
         let loadable = match section.flags() {
-            SectionFlags::Elf { sh_flags } => sh_flags & 2 != 0,
+            SectionFlags::Elf { sh_flags } => sh_flags & u64::from(object::elf::SHF_ALLOC) != 0,
             _ => false,
         };
         if !loadable {
