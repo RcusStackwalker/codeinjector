@@ -169,7 +169,7 @@ pub fn inject_section(
     section_data: &[u8],
     ecu: &EcuDescription,
     ori_buf: &[u8],
-    out_buf: &mut Vec<u8>,
+    out_buf: &mut [u8],
 ) {
     let method = get_patch_method(name);
 
