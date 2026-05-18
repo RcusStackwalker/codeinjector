@@ -178,11 +178,9 @@ pub fn inject_section(
 ) {
     let method = get_patch_method(name);
 
-    if method != PatchMethod::Generic {
-        if !name.contains(ecu.patch_method_prefix) {
-            eprintln!("patch_method incompatible with arch at {}", name);
-            crate::usage_and_exit();
-        }
+    if method != PatchMethod::Generic && !name.contains(ecu.patch_method_prefix) {
+        eprintln!("patch_method incompatible with arch at {}", name);
+        crate::usage_and_exit();
     }
 
     let sec_size = section_data.len();
