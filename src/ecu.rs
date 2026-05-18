@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Aleksei Markelov
 
+#[derive(Debug, PartialEq)]
 pub struct EcuDescription {
     pub name: &'static str,
     pub patch_method_prefix: &'static str,
