@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Aleksei Markelov
+
 import subprocess
 import pytest
 from fixtures_patch import make_generic_patch_elf

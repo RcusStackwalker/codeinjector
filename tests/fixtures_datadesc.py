@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Aleksei Markelov
+
 """Generator functions for data-descriptor ELF fixtures."""
 from elf_builder import (ELFBuilder, EM_M32R, SHT_PROGBITS, SHT_SYMTAB, SHT_STRTAB,
                           STB_GLOBAL, STT_OBJECT, SHN_UNDEF,
