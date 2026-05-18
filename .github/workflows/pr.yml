@@ -30,18 +30,18 @@ jobs:
         run: uv sync
 
       - name: Build wheel
-        run: uv run maturin build --release
+        run: uv run maturin build --release --out dist
 
       - name: Install wheel and run tests
         run: |
-          uv pip install --force-reinstall target/wheels/*.whl
+          uv pip install --force-reinstall dist/*.whl
           uv run pytest tests/ --binary "$(uv run which codeinjector)" -v
 
       - name: Upload wheel
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: wheel-${{ matrix.os }}
-          path: target/wheels/*.whl
+          path: dist/*.whl
           retention-days: 2
 
   test-coverage:
