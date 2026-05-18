@@ -180,7 +180,7 @@ fn emit_2dmap_data_desc(
     let axisname = p.next().unwrap_or("");
     let addr = data_addr as u32;
     println!("<table name=\"{name}\" category=\"{cat}\" address=\"{addr:x}\" type=\"2D\" scaling=\"{scl}\">");
-    emit_axis_desc(&axisname, "Y", symbols, section_data, ori_buf, short_pointer_size);
+    emit_axis_desc(axisname, "Y", symbols, section_data, ori_buf, short_pointer_size);
     println!("</table>\n");
 }
 
@@ -201,8 +201,8 @@ fn emit_3dmap_data_desc(
     let yaxisname = p.next().unwrap_or("");
     let addr = data_addr as u32;
     println!("<table name=\"{name}\" category=\"{cat}\" address=\"{addr:x}\" type=\"3D\" scaling=\"{scl}\" swapxy=\"true\">");
-    emit_axis_desc(&xaxisname, "X", symbols, section_data, ori_buf, short_pointer_size);
-    emit_axis_desc(&yaxisname, "Y", symbols, section_data, ori_buf, short_pointer_size);
+    emit_axis_desc(xaxisname, "X", symbols, section_data, ori_buf, short_pointer_size);
+    emit_axis_desc(yaxisname, "Y", symbols, section_data, ori_buf, short_pointer_size);
     println!("</table>\n");
 }
 
