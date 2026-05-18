@@ -67,7 +67,7 @@ fn encode_m32r_bl(data: &[u8], vma: usize) -> Result<[u8; 4], &'static str> {
     let target = u32::from_be_bytes(data[0..4].try_into().unwrap());
     let pc = vma as u32;
     let patch = 0xfe000000u32.wrapping_add(
-        target.wrapping_sub(pc).wrapping_div(4) & 0x00ff_ffff,
+        (target.wrapping_sub(pc) >> 2) & 0x00ff_ffff,
     );
     Ok(patch.to_be_bytes())
 }
