@@ -24,20 +24,18 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
 
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-        with:
-          python-version: "3.x"
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
-      - name: Install maturin and pytest
-        run: pip install -r .github/workflows/requirements.txt pytest
+      - name: Install dependencies
+        run: uv sync
 
       - name: Build wheel
-        run: maturin build --release
+        run: uv run maturin build --release
 
       - name: Install wheel and run tests
         run: |
-          pip install --force-reinstall target/wheels/*.whl
-          pytest tests/ --binary "$(which codeinjector)" -v
+          uv pip install --force-reinstall target/wheels/*.whl
+          uv run pytest tests/ --binary "$(uv run which codeinjector)" -v
 
       - name: Upload wheel
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -55,18 +53,16 @@ jobs:
 
       - uses: taiki-e/install-action@1af28e82b8acfe451db73552a27a2019a19b9ab6 # cargo-llvm-cov
 
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-        with:
-          python-version: "3.x"
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
-      - name: Install pytest
-        run: pip install pytest
+      - name: Install dependencies
+        run: uv sync
 
       - name: Build instrumented binary, run tests, and generate coverage
         run: |
           source <(cargo llvm-cov show-env --sh)
           cargo build
-          pytest tests/ --binary ./target/debug/codeinjector -v
+          uv run pytest tests/ --binary ./target/debug/codeinjector -v
           cargo llvm-cov report --lcov --output-path lcov.info
           {
             echo '## Coverage'
