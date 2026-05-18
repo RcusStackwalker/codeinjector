@@ -21,7 +21,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           create-release: true
-          create-tag: true
 
       - name: Get created tag
         id: get-tag
