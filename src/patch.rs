@@ -38,10 +38,8 @@ pub fn get_patch_method(name: &str) -> PatchMethod {
 
 use crate::ecu::EcuDescription;
 
-fn hex_print(data: &[u8]) {
-    for b in data {
-        print!("{:02x}", b);
-    }
+fn to_hex_string(data: &[u8]) -> String {
+    data.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 fn print_patch_xml(
@@ -52,17 +50,9 @@ fn print_patch_xml(
     out_buf: &[u8],
 ) {
     let scaling_name = format!("{} _scaling", section_name).replace('.', "_");
-    println!("<scaling name=\"{}\" storagetype=\"bloblist\">", scaling_name);
-    print!("\t<data name=\"Original\" value=\"");
-    hex_print(&ori_buf[patch_address..patch_address + patch_size]);
-    println!("\" />");
-    print!("\t<data name=\"Patched\" value=\"");
-    hex_print(&out_buf[patch_address..patch_address + patch_size]);
-    println!("\" />\n</scaling>\n");
-    println!(
-        "<table name=\"{}\" address=\"{:x}\" category=\"Patches\" type=\"1D\" scaling=\"{}\" />\n",
-        section_name, patch_address, scaling_name
-    );
+    let original = to_hex_string(&ori_buf[patch_address..patch_address + patch_size]);
+    let patched  = to_hex_string(&out_buf[patch_address..patch_address + patch_size]);
+    println!("<scaling name=\"{scaling_name}\" storagetype=\"bloblist\">\n\t<data name=\"Original\" value=\"{original}\" />\n\t<data name=\"Patched\" value=\"{patched}\" />\n</scaling>\n\n<table name=\"{section_name}\" address=\"{patch_address:x}\" category=\"Patches\" type=\"1D\" scaling=\"{scaling_name}\" />\n");
 }
 
 fn encode_m32r_bl(data: &[u8], vma: usize) -> Result<[u8; 4], &'static str> {

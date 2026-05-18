@@ -72,8 +72,8 @@ fn emit_value_data_desc(s: &str, data_addr: u64) {
     let cat  = p.next().unwrap_or("");
     let name = p.next().unwrap_or("");
     let scl  = p.next().unwrap_or("");
-    println!("<table name=\"{}\" category=\"{}\" address=\"{:x}\" type=\"1D\" scaling=\"{}\"/>",
-        name, cat, data_addr as u32, scl);
+    let addr = data_addr as u32;
+    println!("<table name=\"{name}\" category=\"{cat}\" address=\"{addr:x}\" type=\"1D\" scaling=\"{scl}\"/>");
 }
 
 fn emit_array_data_desc(s: &str, data_addr: u64) {
@@ -83,8 +83,8 @@ fn emit_array_data_desc(s: &str, data_addr: u64) {
     let name  = p.next().unwrap_or("");
     let scl   = p.next().unwrap_or("");
     let axdsc = p.next().unwrap_or("");
-    println!("<table name=\"{}\" category=\"{}\" address=\"{:x}\" type=\"2D\" scaling=\"{}\">\n\t{}\n</table>\n",
-        name, cat, data_addr as u32, scl, axdsc);
+    let addr = data_addr as u32;
+    println!("<table name=\"{name}\" category=\"{cat}\" address=\"{addr:x}\" type=\"2D\" scaling=\"{scl}\">\n\t{axdsc}\n</table>\n");
 }
 
 fn emit_3darray_data_desc(s: &str, data_addr: u64) {
@@ -95,8 +95,8 @@ fn emit_3darray_data_desc(s: &str, data_addr: u64) {
     let scl  = p.next().unwrap_or("");
     let xdsc = p.next().unwrap_or("");
     let ydsc = p.next().unwrap_or("");
-    println!("<table name=\"{}\" category=\"{}\" address=\"{:x}\" type=\"3D\" scaling=\"{}\">\n\t{}\n\t{}\n</table>\n",
-        name, cat, data_addr as u32, scl, xdsc, ydsc);
+    let addr = data_addr as u32;
+    println!("<table name=\"{name}\" category=\"{cat}\" address=\"{addr:x}\" type=\"3D\" scaling=\"{scl}\">\n\t{xdsc}\n\t{ydsc}\n</table>\n");
 }
 
 fn emit_axis_ex_desc(
@@ -119,14 +119,12 @@ fn emit_axis_ex_desc(
                 let scl  = p.next().unwrap_or("");
                 let axis_size = get_axis_size(da.address as usize, ori_buf, short_pointer_size);
                 let axis_header = 2 * short_pointer_size + 2;
-                println!(
-                    "\t<table name=\"{}\" type=\"{} Axis\" address=\"{:x}\" elements=\"{}\" scaling=\"{}\"/>",
-                    name, axis_type, da.address as usize + axis_header, axis_size, scl
-                );
+                let addr = da.address as usize + axis_header;
+                println!("\t<table name=\"{name}\" type=\"{axis_type} Axis\" address=\"{addr:x}\" elements=\"{axis_size}\" scaling=\"{scl}\"/>");
             }
         }
         _ => {
-            println!("\t<table name=\"{}\" type=\"{} Axis\"/>", axis_sym_name, axis_type);
+            println!("\t<table name=\"{axis_sym_name}\" type=\"{axis_type} Axis\"/>");
         }
     }
 }
@@ -156,14 +154,12 @@ fn emit_axis_desc(
                 let scl   = p.next().unwrap_or("");
                 let size  = p.next().unwrap_or("");
                 let axis_header = 2 * short_pointer_size + 2;
-                println!(
-                    "\t<table name=\"{}\" type=\"{} Axis\" address=\"{:x}\" elements=\"{}\" scaling=\"{}\"/>",
-                    name, axis_type, da.address as usize + axis_header, size, scl
-                );
+                let addr = da.address as usize + axis_header;
+                println!("\t<table name=\"{name}\" type=\"{axis_type} Axis\" address=\"{addr:x}\" elements=\"{size}\" scaling=\"{scl}\"/>");
             }
         }
         _ => {
-            println!("\t<table name=\"{}\" type=\"{} Axis\"/>", axis_sym_name, axis_type);
+            println!("\t<table name=\"{axis_sym_name}\" type=\"{axis_type} Axis\"/>");
         }
     }
 }
@@ -182,8 +178,8 @@ fn emit_2dmap_data_desc(
     let name     = p.next().unwrap_or("");
     let scl      = p.next().unwrap_or("");
     let axisname = p.next().unwrap_or("");
-    println!("<table name=\"{}\" category=\"{}\" address=\"{:x}\" type=\"2D\" scaling=\"{}\">",
-        name, cat, data_addr as u32, scl);
+    let addr = data_addr as u32;
+    println!("<table name=\"{name}\" category=\"{cat}\" address=\"{addr:x}\" type=\"2D\" scaling=\"{scl}\">");
     emit_axis_desc(&axisname, "Y", symbols, section_data, ori_buf, short_pointer_size);
     println!("</table>\n");
 }
@@ -203,8 +199,8 @@ fn emit_3dmap_data_desc(
     let scl       = p.next().unwrap_or("");
     let xaxisname = p.next().unwrap_or("");
     let yaxisname = p.next().unwrap_or("");
-    println!("<table name=\"{}\" category=\"{}\" address=\"{:x}\" type=\"3D\" scaling=\"{}\" swapxy=\"true\">",
-        name, cat, data_addr as u32, scl);
+    let addr = data_addr as u32;
+    println!("<table name=\"{name}\" category=\"{cat}\" address=\"{addr:x}\" type=\"3D\" scaling=\"{scl}\" swapxy=\"true\">");
     emit_axis_desc(&xaxisname, "X", symbols, section_data, ori_buf, short_pointer_size);
     emit_axis_desc(&yaxisname, "Y", symbols, section_data, ori_buf, short_pointer_size);
     println!("</table>\n");
@@ -225,14 +221,16 @@ pub fn process_section(
         let desc_str = match get_data_desc_string(sym.address, section_data) {
             Some(s) if !s.is_empty() => s,
             _ => {
-                println!("<comment>That's strange: unable to find desc string for {}</comment>", sym.name);
+                let name = &sym.name;
+                println!("<comment>That's strange: unable to find desc string for {name}</comment>");
                 continue;
             }
         };
         let data_sym = match get_data_symbol(&sym.name, symbols) {
             Some(s) => s,
             None => {
-                println!("<comment>That's strange: unable to find data symbol for {}</comment>", sym.name);
+                let name = &sym.name;
+                println!("<comment>That's strange: unable to find data symbol for {name}</comment>");
                 continue;
             }
         };
@@ -247,7 +245,7 @@ pub fn process_section(
             DataDescType::Map2D8  => emit_2dmap_data_desc(&desc_str, da + (2 + ptr) as u64,   symbols, section_data, ori_buf, ptr),
             DataDescType::Map2D16 => emit_2dmap_data_desc(&desc_str, da + (4 + ptr) as u64,   symbols, section_data, ori_buf, ptr),
             DataDescType::Axis | DataDescType::AxisEx => { /* skipped explicitly */ }
-            DataDescType::Unknown => println!("<comment name=\"{}\">{}</comment>", sym.name, desc_str),
+            DataDescType::Unknown => { let name = &sym.name; println!("<comment name=\"{name}\">{desc_str}</comment>"); }
         }
     }
 }
