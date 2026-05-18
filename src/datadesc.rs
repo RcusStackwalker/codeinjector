@@ -68,7 +68,7 @@ fn get_axis_size(rom_addr: usize, ori_buf: &[u8], short_pointer_size: usize) -> 
 
 fn emit_value_data_desc(s: &str, data_addr: u64) {
     let mut p = s.splitn(5, ';');
-    let _ty  = p.next().unwrap_or("");
+    p.next();
     let cat  = p.next().unwrap_or("");
     let name = p.next().unwrap_or("");
     let scl  = p.next().unwrap_or("");
@@ -78,7 +78,7 @@ fn emit_value_data_desc(s: &str, data_addr: u64) {
 
 fn emit_array_data_desc(s: &str, data_addr: u64) {
     let mut p = s.splitn(6, ';');
-    let _ty   = p.next().unwrap_or("");
+    p.next();
     let cat   = p.next().unwrap_or("");
     let name  = p.next().unwrap_or("");
     let scl   = p.next().unwrap_or("");
@@ -89,7 +89,7 @@ fn emit_array_data_desc(s: &str, data_addr: u64) {
 
 fn emit_3darray_data_desc(s: &str, data_addr: u64) {
     let mut p = s.splitn(7, ';');
-    let _ty  = p.next().unwrap_or("");
+    p.next();
     let cat  = p.next().unwrap_or("");
     let name = p.next().unwrap_or("");
     let scl  = p.next().unwrap_or("");
@@ -114,7 +114,7 @@ fn emit_axis_ex_desc(
         (Some(ds), Some(da)) => {
             if let Some(str_val) = get_data_desc_string(ds.address, section_data) {
                 let mut p = str_val.splitn(4, ';');
-                let _ty  = p.next().unwrap_or("");
+                p.next();
                 let name = p.next().unwrap_or("");
                 let scl  = p.next().unwrap_or("");
                 let axis_size = get_axis_size(da.address as usize, ori_buf, short_pointer_size);
@@ -149,7 +149,7 @@ fn emit_axis_desc(
         (Some(ds), Some(da)) => {
             if let Some(str_val) = get_data_desc_string(ds.address, section_data) {
                 let mut p = str_val.splitn(5, ';');
-                let _ty   = p.next().unwrap_or("");
+                p.next();
                 let name  = p.next().unwrap_or("");
                 let scl   = p.next().unwrap_or("");
                 let size  = p.next().unwrap_or("");
@@ -173,7 +173,7 @@ fn emit_2dmap_data_desc(
     short_pointer_size: usize,
 ) {
     let mut p = s.splitn(6, ';');
-    let _ty      = p.next().unwrap_or("");
+    p.next();
     let cat      = p.next().unwrap_or("");
     let name     = p.next().unwrap_or("");
     let scl      = p.next().unwrap_or("");
@@ -193,7 +193,7 @@ fn emit_3dmap_data_desc(
     short_pointer_size: usize,
 ) {
     let mut p = s.splitn(7, ';');
-    let _ty       = p.next().unwrap_or("");
+    p.next();
     let cat       = p.next().unwrap_or("");
     let name      = p.next().unwrap_or("");
     let scl       = p.next().unwrap_or("");
