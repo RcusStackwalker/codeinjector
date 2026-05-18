@@ -44,7 +44,7 @@ enum DataDescType {
 }
 
 fn get_data_desc_type(s: &str) -> DataDescType {
-    match s.splitn(2, ';').next().unwrap_or("") {
+    match s.split(';').next().unwrap_or("") {
         "value"   => DataDescType::Value,
         "array"   => DataDescType::Array,
         "3darray" => DataDescType::Array3D,
