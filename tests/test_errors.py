@@ -10,7 +10,7 @@ def test_too_few_args(binary, tmp_path):
     """Fewer than 4 argv entries triggers usage()."""
     r = subprocess.run([binary], capture_output=True, text=True)
     assert r.returncode != 0
-    assert 'Usage:' in r.stdout
+    assert 'Usage:' in r.stderr
 
 
 def test_unknown_ecu(binary, rom, out, tmp_path):
@@ -22,7 +22,7 @@ def test_unknown_ecu(binary, rom, out, tmp_path):
         capture_output=True, text=True,
     )
     assert r.returncode != 0
-    assert 'ecu not supported' in r.stdout
+    assert 'ecu not supported' in r.stderr
 
 
 def test_original_file_missing(binary, out, tmp_path):
@@ -35,7 +35,7 @@ def test_original_file_missing(binary, out, tmp_path):
         capture_output=True, text=True,
     )
     assert r.returncode != 0
-    assert 'No original_file' in r.stdout
+    assert 'No original_file' in r.stderr
 
 
 def test_injection_file_missing(binary, rom, out, tmp_path):
@@ -46,7 +46,7 @@ def test_injection_file_missing(binary, rom, out, tmp_path):
         capture_output=True, text=True,
     )
     assert r.returncode != 0
-    assert 'No injection_file' in r.stdout
+    assert 'No injection_file' in r.stderr
 
 
 def test_output_file_unwritable(binary, rom, tmp_path):
@@ -59,7 +59,7 @@ def test_output_file_unwritable(binary, rom, tmp_path):
         capture_output=True, text=True,
     )
     assert r.returncode != 0
-    assert "Can't create output_file" in r.stdout
+    assert "Can't create output_file" in r.stderr
 
 
 def test_non_elf_injection(binary, rom, out, tmp_path):
@@ -71,4 +71,4 @@ def test_non_elf_injection(binary, rom, out, tmp_path):
         capture_output=True, text=True,
     )
     assert r.returncode != 0
-    assert "isn't BFD object" in r.stdout
+    assert "isn't BFD object" in r.stderr
