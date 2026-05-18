@@ -114,6 +114,9 @@ fn encode_m32r_splice(data: &[u8], vma: usize) -> Result<[u8; 8], &'static str> 
 
 // Returns (buf, total_patch_size). buf is 14 bytes max; only buf[..size] is valid.
 fn encode_sh_jump_to_body(data: &[u8], vma: usize) -> Result<([u8; 14], usize), &'static str> {
+    if data.len() < 4 {
+        return Err("Invalid jump-to-body injection instruction section size");
+    }
     let nop_prefix = match vma % 4 {
         2 => true,
         0 => false,
@@ -135,6 +138,9 @@ fn encode_sh_jump_to_body(data: &[u8], vma: usize) -> Result<([u8; 14], usize), 
 
 // Returns (buf, total_patch_size). buf is 26 bytes max; only buf[..size] is valid.
 fn encode_sh_splice(data: &[u8], vma: usize) -> Result<([u8; 26], usize), &'static str> {
+    if data.len() < 8 {
+        return Err("Invalid splice injection section size");
+    }
     let nop_prefix = match vma % 4 {
         2 => true,
         0 => false,
