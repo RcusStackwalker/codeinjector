@@ -78,6 +78,12 @@ fn main() {
             continue;
         }
 
+        // Skip uninitialized sections (SHT_NOBITS / COMMON allocations in RAM).
+        // Matches libbfd SEC_LOAD behaviour: sections with no file content are not patches.
+        if section.kind() == object::SectionKind::UninitializedData {
+            continue;
+        }
+
         patch::inject_section(
             &name,
             section.address() as usize,
